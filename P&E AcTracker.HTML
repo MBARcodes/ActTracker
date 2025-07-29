@@ -67,7 +67,7 @@
   <tbody id="activityBody"></tbody>
   <tfoot>
     <tr class="summary-row">
-      <td colspan="4">Total Hours</td>
+      <td colspan="4">Total Hours(Today)</td>
       <td id="totalHours">0.00</td>
       <td colspan="3"></td>
     </tr>
@@ -386,13 +386,27 @@
       ]);
     });
 
-    const total = filtered.reduce((s, a) => s + (a.elapsedSeconds || 0), 0);
-    ws_data.push(['', '', '', 'Total Hours', (total / 3600).toFixed(2)]);
+ // Step 1: Get today's date in YYYY-MM-DD format
+const todayStr = new Date().toISOString().split('T')[0];
 
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    XLSX.utils.book_append_sheet(wb, ws, "Activities");
-    XLSX.writeFile(wb, `activity_log_${new Date().toISOString().slice(0,10)}.xlsx`);
+// Step 2: Filter only entries from today
+const todayEntries = filtered.filter(a => {
+  // Ensure a.date is in YYYY-MM-DD format; adapt if not
+  const entryDate = a.date?.split('T')[0]; // if a.date includes time
+  return entryDate === todayStr;
+});
+
+// Step 3: Sum only today's elapsedSeconds
+const total = todayEntries.reduce((s, a) => s + (a.elapsedSeconds || 0), 0);
+
+// Step 4: Push to worksheet
+ws_data.push(['', '', '', 'Total Hours', (total / 3600).toFixed(2)]);
+
+// Step 5: Create and download Excel file
+const wb = XLSX.utils.book_new();
+const ws = XLSX.utils.aoa_to_sheet(ws_data);
+XLSX.utils.book_append_sheet(wb, ws, "Activities");
+XLSX.writeFile(wb, `activity_log_${todayStr}.xlsx`);
   }
 
   // Initialize
